@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ViDecide</title>
+<meta name="description" content="ViDecide trains video diffusion models to generate reasoning and planning videos one state transition at a time, decide when to stop, and correct their own failed decisions.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ViDecide: Teaching Video Diffusion Models to Reason and Plan Step by Step">
+<meta property="og:description" content="ViDecide trains video diffusion models to generate reasoning and planning videos one state transition at a time, decide when to stop, and correct their own failed decisions.">
+<meta property="og:url" content="https://kevin-thu.github.io/ViDecide/">
+<meta property="og:image" content="https://kevin-thu.github.io/ViDecide/img/social.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kevin-thu.github.io/ViDecide/img/social.jpg">
+<link rel="canonical" href="https://kevin-thu.github.io/ViDecide/">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav class="topbar" aria-label="Sections">
+  <div class="topbar-in">
+    <a class="mark" href="#top"><em>ViDecide</em></a>
+    <div class="toplinks">
+      <a href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#more">More results</a>
+      <a href="#bibtex">Citation</a>
+    </div>
+  </div>
+</nav>
+
+<header class="head" id="top">
+  <h1><span class="name">ViDecide</span><span class="sub">Teaching Video Diffusion Models to Reason and Plan Step by Step</span></h1>
+  <p class="authors"><span class="au"><a href="https://kevin-thu.github.io/homepage/" target="_blank" rel="noopener">Kaiwen Zhang</a><sup>1</sup>,</span> <span class="au">Yiming Gao<sup>2</sup>,</span> <span class="au"><a href="https://xizaoqu.github.io/" target="_blank" rel="noopener">Zeqi Xiao</a><sup>1</sup>,</span> <span class="au"><a href="https://xinntao.github.io/" target="_blank" rel="noopener">Xintao Wang</a><sup>3</sup>,</span> <span class="au">Pengfei Wan<sup>2</sup>,</span> <span class="au"><a href="https://scholar.google.com/citations?user=PXO4ygEAAAAJ" target="_blank" rel="noopener">Kun Gai</a><sup>2</sup>,</span> <span class="au"><a href="https://xingangpan.github.io/" target="_blank" rel="noopener">Xingang Pan</a><sup>1</sup></span></p>
+  <p class="affils"><span><sup>1</sup>S-Lab, Nanyang Technological University</span><span><sup>2</sup>KlingAI Research</span><span><sup>3</sup>CUHK</span></p>
+  <div class="links"><a class="btn" title="Coming soon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>Paper</a><a class="btn" title="Coming soon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l-6 6 6 6"/><path d="M16 6l6 6-6 6"/></svg>Code</a><a class="btn" title="Coming soon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 22V12"/><path d="M21 7l-9 5-9-5"/></svg>Models</a><a class="btn" title="Coming soon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Data</a><a class="btn" href="#bibtex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>BibTeX</a></div>
+</header>
+
+<section class="teaser wrap">
+  <div class="teaser-grid">
+    <div class="teaser-videos">
+      <div class="player" data-items="zs_blocks" data-panel="170"></div>
+      <div class="player" data-items="zs_snake" data-panel="170"></div>
+    </div>
+    <figure class="teaser-chart"><img src="img/fig1_chart.webp" width="1000" height="1611" alt="Strict success rate of each benchmark from standard fine-tuning to the full method"><figcaption>Standard SFT uses the default timestep shift of Wan2.2 (s&nbsp;=&nbsp;5).</figcaption></figure>
+  </div>
+  <p class="caption center"><b>Existing video models break the physical or logical task rules, even when the final frame looks right.</b><br><em>ViDecide</em> solves the same test puzzles with valid state transitions and stops at its own EOS frame (left),<br>raising the average strict success rate from 23.3% with standard fine-tuning to 83.8% (right).</p>
+</section>
+
+<section class="sec wrap" id="abstract">
+  <h2>Abstract</h2>
+  <p class="text">Current leading video generation models can synthesize highly realistic videos, while still frequently violating physical and logical constraints in multi-step reasoning and planning, even after training with large-scale reasoning data or existing diffusion RL methods. We attribute these failures to the conventional video training paradigm, which treats a solution as a fixed-length clip rather than a chain of decisions. We present <em>ViDecide</em>, a decision-centric framework that trains video diffusion models to predict state transitions causally and decide when to stop, with a decision-focused training schedule. We further propose <em>Corrective Fine-tuning (CFT)</em>, which corrects failed decisions by mapping their noise to the model&rsquo;s own successful continuations, achieving stable improvement without policy-gradient optimization. Across abstract games, planning tasks, and a new benchmark of multi-step robot planning, <em>ViDecide</em> achieves an average strict success rate of 83.8%, far above 23.3% for standard fine-tuning and 67.8% for the strongest prior method, and generalizes to larger puzzles and unseen layouts. Our framework therefore unlocks greater potential for video generation models as reliable reasoners and planners in the visual world.</p>
+</section>
+
+<section class="sec wrap" id="method">
+  <h2>Method</h2>
+  <figure class="fig method-fig">
+    <div class="scroller"><video id="method-video" muted playsinline preload="metadata" aria-label="Animated method overview"></video></div>
+    <div class="vctl" id="method-ctl">
+      <button class="vbtn" type="button" id="m-play" aria-label="Pause"></button>
+      <input type="range" id="m-seek" min="0" max="1000" value="0" step="1" aria-label="Position in the animation">
+      <span class="vtime mono" id="m-time">0:00</span>
+      <button class="vbtn vspeed" type="button" id="m-speed" aria-label="Playback speed">1&times;</button>
+    </div>
+  </figure>
+  <div class="steps" id="method-steps">
+    <button class="step" type="button" data-t="0"><span class="step-key">(a)</span><b>Causal generation with adaptive termination.</b> The model generates the solution one state transition at a time, each conditioned on all previous states, and stops by drawing an end-of-sequence (EOS) frame with a red border.</button>
+    <button class="step" type="button" data-t="7.6"><span class="step-key">(b)</span><b>Decision-focused training schedule.</b> Training timesteps are shifted toward high noise, where the next state is hidden and has to be inferred from the rules and the history.</button>
+    <button class="step" type="button" data-t="14.0"><span class="step-key">(c)</span><b>Corrective Fine-tuning (CFT).</b> From the state before a failed decision, CFT resamples a successful continuation and trains the noise that produced the failed decision to generate the successful one.</button>
+  </div>
+</section>
+
+<section class="sec wrap" id="results">
+  <h2>Results</h2>
+
+  <div class="bench-grid" id="bench-grid">
+    <div class="bench">
+      <p class="bench-name">VideoRLVR</p>
+      <p class="bench-kind">Rule-based games, 1,000 test puzzles per game</p>
+      <div class="bench-tiles" data-items="bench_maze,hero_0,hero_1"></div>
+    </div>
+    <div class="bench">
+      <p class="bench-name">VBVR-MultiStep</p>
+      <p class="bench-kind">Six planning tasks, 100 test puzzles each</p>
+      <div class="bench-tiles" data-items="hero_2,hero_3,hero_7"></div>
+    </div>
+    <div class="bench">
+      <p class="bench-name">RoboTwin-Plan <span class="new">new</span></p>
+      <p class="bench-kind">Dual-arm block planning, 700 test episodes</p>
+      <div class="bench-tiles" data-items="hero_4,hero_5,hero_6"></div>
+    </div>
+  </div>
+
+  <div class="ssr">
+    <p class="ssr-name">Strict success rate <span>(SSR)</span></p>
+    <div class="ssr-def">
+      <p>The share of test videos that</p>
+      <p class="conds"><span class="cond">reach the goal</span><span class="and">and</span><span class="cond">follow the task rules at every state transition</span></p>
+      <p class="ssr-note">A rule verifier replays every transition of the video, so a final frame that looks solved does not count by itself. On VBVR-MultiStep the solution must also be the shortest.</p>
+    </div>
+  </div>
+
+  <div class="block" id="r-causal">
+    <p class="design-tag">Design 1 &middot; Generation paradigm</p>
+    <h3>Causal generation with adaptive termination</h3>
+    <p class="text center-text">Bidirectional generation denoises all frames of a fixed-length clip together. <em>ViDecide</em> generates the video causally in segments of K latent frames, frame-wise (K&nbsp;=&nbsp;1) or chunk-wise (K&nbsp;=&nbsp;8), and stops at its own EOS frame. With the same data and backbone, this raises the average strict success rate by 48.2 points.</p>
+    <div class="player" data-items="para_vrlvr_test_sokoban_000521,para_vrlvr_test_flowfree_000627,para_hanoi_05307,para_v4_sort_nobuffer_4_1000211,para_v4_hanoi_triangle_2-5_1000006" data-panel="250" data-auto="1"></div>
+    <div class="table-wrap">
+      <table class="num">
+        <caption><b>Strict success rate (%) of the generation paradigms.</b><br>Causal generation is the best on every benchmark: frame-wise on the games,<br>chunk-wise on RoboTwin-Plan, where each state lasts longer.</caption>
+        <thead>
+          <tr><th rowspan="2" class="l">Method</th><th colspan="4" class="grp">Wan2.2-5B fine-tuned</th><th colspan="2" class="grp">DiT-B from scratch</th></tr>
+          <tr><th>FlowFree</th><th>Sokoban</th><th>VBVR-MultiStep</th><th>RoboTwin-Plan</th><th>FlowFree</th><th>Sokoban</th></tr>
+        </thead>
+        <tbody>
+          <tr class="cat"><td colspan="7">Zero-shot video generators<sup>&dagger;</sup></td></tr>
+          <tr class="dim"><td>Seedance 2.5<sup>&Dagger;</sup></td><td>0.0</td><td>5.0</td><td>20.0</td><td>6.7</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="dim"><td>Veo 3.1<sup>&Dagger;</sup></td><td>0.0</td><td>5.0</td><td>0.0</td><td>0.0</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="dim"><td>Wan2.2-5B</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="dim"><td>VBVR-Wan2.2-A14B</td><td>0.0</td><td>0.0</td><td>11.3</td><td>0.0</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="dim"><td>VBVR-Pro-Wan2.2-5B-RLVR</td><td>0.0</td><td>0.0</td><td>7.7</td><td>0.0</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="cat"><td colspan="7">Fixed-length generation</td></tr>
+          <tr><td>Bidirectional</td><td>1.1</td><td>50.8</td><td>22.3</td><td>42.6</td><td>0.0</td><td>8.8</td></tr>
+          <tr><td>HDR</td><td>11.6</td><td>45.9</td><td>24.0</td><td>63.9</td><td>0.4</td><td>10.3</td></tr>
+          <tr><td>S2PD</td><td>68.1</td><td>75.7</td><td>64.5</td><td>62.9</td><td>41.2</td><td>56.4</td></tr>
+          <tr class="cat"><td colspan="7">Causal generation with adaptive termination</td></tr>
+          <tr class="ours"><td>Ours (K = 8)</td><td>28.5</td><td>75.0</td><td>57.8</td><td><b>73.9</b></td><td>5.8</td><td>18.3</td></tr>
+          <tr class="ours"><td>Ours (K = 1)</td><td><b>77.9</b></td><td><b>83.0</b></td><td><b>74.8</b></td><td>70.1</td><td><b>58.6</b></td><td><b>73.8</b></td></tr>
+        </tbody>
+      </table>
+      <p class="table-note"><sup>&dagger;</sup>Judged with a relaxed criterion that accepts non-optimal solutions and minor errors after manual review.<br><sup>&Dagger;</sup>Evaluated on 20&ndash;30 test samples per benchmark due to API cost.</p>
+    </div>
+    <details class="more">
+      <summary>Videos: comparison with the prior methods HDR and S2PD</summary>
+      <div class="player" data-items="prior_flowfree,prior_sokoban,prior_vbvr,prior_robotwin" data-panel="230" data-auto="1"></div>
+    </details>
+    <details class="more">
+      <summary>Videos: zero-shot video generators on the games</summary>
+      <div class="player" data-items="zs_flowfree,zs_sokoban,zs_vbvr" data-panel="230" data-auto="1"></div>
+    </details>
+  </div>
+
+  <div class="block" id="r-schedule">
+    <p class="design-tag">Design 2 &middot; Training schedule</p>
+    <h3>Decision-focused training schedule</h3>
+    <p class="text center-text">The decision-focused schedule shifts training toward high noise levels, concentrating it on the decisions themselves. On RoboTwin-Plan, strict success rises from 33.3% with the default s&nbsp;=&nbsp;5 of Wan2.2 to 73.9% with s&nbsp;=&nbsp;10, likely because robot videos contain much more visual detail.</p>
+    <div class="duo">
+      <div class="player" data-items="schedule_blocks" data-panel="190"></div>
+      <div class="table-wrap tight">
+        <table class="num shift">
+          <caption><b>Strict success rate (%) for each shift s.</b><br>s = 1 applies no shift;<br>s = 5 is the Wan2.2 default.</caption>
+          <thead><tr><th class="l">Benchmark</th><th>s = 1</th><th>s = 5</th><th>s = 10</th></tr></thead>
+          <tbody>
+            <tr class="cat"><td colspan="4">Wan2.2-5B</td></tr>
+            <tr><td>FlowFree</td><td>46.8</td><td>73.5</td><td><b>77.9</b></td></tr>
+            <tr><td>Sokoban</td><td>68.4</td><td>79.6</td><td><b>83.0</b></td></tr>
+            <tr><td>VBVR-MultiStep</td><td>44.0</td><td>70.3</td><td><b>74.8</b></td></tr>
+            <tr><td>RoboTwin-Plan</td><td>2.6</td><td>33.3</td><td><b>73.9</b></td></tr>
+            <tr class="cat"><td colspan="4">DiT-B</td></tr>
+            <tr><td>FlowFree</td><td>0.0</td><td>51.5</td><td><b>58.6</b></td></tr>
+            <tr><td>Sokoban</td><td>2.0</td><td>70.8</td><td><b>73.8</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="block" id="r-cft">
+    <p class="design-tag">Design 3 &middot; Post-training</p>
+    <h3>Corrective Fine-tuning</h3>
+    <p class="text center-text">All post-training methods start from the same SFT model and use the same training budget. CFT improves every benchmark, while Flow-GRPO and DiffusionNFT rarely improve the model, whether the reward is given to the whole video or to continuations branched at a failed decision.</p>
+    <h4>Test puzzles that the SFT model fails</h4>
+    <div class="player" data-items="cft_vrlvr_test_sokoban_000132,cft_vrlvr_test_flowfree_000885,cft_hanoi_05207,cft_v4_blocksworld_row_2-4_1000132,cft_gen_test_8x8_00041" data-panel="240" data-auto="1"></div>
+    <h4>Diffusion RL and CFT from the same SFT model</h4>
+    <div class="player" data-items="rl_flowfree_000440,rl_robotwin_1000016,rl_ordinal" data-panel="230" data-auto="1"></div>
+    <div class="table-wrap">
+      <table class="num wide post">
+        <caption><b>Strict success rate (%) after post-training.</b><br>CFT is the best or tied best on 9 of the 10 test sets. Hard: held-out sets of 500 harder puzzles.</caption>
+        <thead>
+          <tr><th rowspan="3" class="l">Method</th><th colspan="6" class="grp">Wan2.2-5B fine-tuned</th><th colspan="4" class="grp">DiT-B from scratch</th></tr>
+          <tr><th colspan="2" class="grp">FlowFree</th><th colspan="2" class="grp">Sokoban</th><th class="c">VBVR-MultiStep</th><th class="c">RoboTwin-Plan</th><th colspan="2" class="grp">FlowFree</th><th colspan="2" class="grp">Sokoban</th></tr>
+          <tr><th>Test</th><th>Hard</th><th>Test</th><th>Hard</th><th class="c">Test</th><th class="c">Test</th><th>Test</th><th>Hard</th><th>Test</th><th>Hard</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S2PD</td><td>68.1</td><td>41.2</td><td>75.7</td><td>38.2</td><td>64.5</td><td>62.9</td><td>41.2</td><td>25.6</td><td>56.4</td><td>11.6</td></tr>
+          <tr class="ours-soft"><td>SFT model (ours)</td><td>77.9</td><td>44.8</td><td>83.0</td><td>50.0</td><td>74.8</td><td>73.9</td><td>58.6</td><td>24.4</td><td>73.8</td><td>32.8</td></tr>
+          <tr><td>+ Continued SFT</td><td>75.5</td><td>48.6</td><td>85.5</td><td>59.6</td><td>74.2</td><td>74.3</td><td>55.8</td><td><b>34.4</b></td><td>74.1</td><td>42.4</td></tr>
+          <tr class="cat"><td colspan="11">Reward on the whole video</td></tr>
+          <tr><td>+ Flow-GRPO</td><td>72.9</td><td>47.0</td><td>80.6</td><td>45.4</td><td>73.2</td><td>73.4</td><td>57.7</td><td>31.8</td><td>73.0</td><td>37.2</td></tr>
+          <tr><td>+ DiffusionNFT</td><td>79.5</td><td>43.0</td><td>80.5</td><td>45.6</td><td>72.7</td><td>72.0</td><td>60.2</td><td>26.0</td><td>71.6</td><td>28.0</td></tr>
+          <tr><td>+ RFT</td><td>83.2</td><td>50.2</td><td>90.1</td><td>61.6</td><td>79.8</td><td>77.9</td><td>60.7</td><td>30.8</td><td>77.9</td><td>43.2</td></tr>
+          <tr class="cat"><td colspan="11">Reward on continuations from a failed decision</td></tr>
+          <tr><td>+ Flow-GRPO</td><td>73.0</td><td>45.8</td><td>81.0</td><td>47.0</td><td>74.3</td><td>75.0</td><td>57.0</td><td>31.0</td><td>74.1</td><td>39.0</td></tr>
+          <tr><td>+ DiffusionNFT</td><td>73.8</td><td>43.2</td><td>78.6</td><td>40.0</td><td>67.2</td><td>63.3</td><td>61.4</td><td>25.0</td><td>72.8</td><td>28.6</td></tr>
+          <tr><td>+ RFT</td><td>80.1</td><td><b>52.0</b></td><td>89.8</td><td>73.8</td><td>78.8</td><td>70.7</td><td>59.0</td><td>28.0</td><td>79.1</td><td>46.3</td></tr>
+          <tr class="ours"><td>+ CFT (ours)</td><td><b>84.4</b></td><td><b>52.0</b></td><td><b>90.8</b></td><td><b>78.2</b></td><td><b>82.2</b></td><td><b>78.0</b></td><td><b>65.6</b></td><td>27.2</td><td><b>79.6</b></td><td><b>48.3</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figure class="fig">
+<figcaption><b>Test strict success rate (%) during post-training</b>, evaluated every half epoch.<br>CFT improves on every benchmark within half an epoch, by more than 20 points on Sokoban-Hard.</figcaption>
+      <div class="scroller"><img src="img/fig5_curves.webp" width="2000" height="501" loading="lazy" alt="Test strict success during post-training"></div>
+    </figure>
+  </div>
+
+  <div class="block" id="r-long">
+    <p class="design-tag">Generalization</p>
+    <h3>Longer plans and new layouts</h3>
+    <p class="text center-text">Every puzzle below lies outside the training range, with more boxes, a larger board, a longer plan or a layout never seen in training. Our models still solve many of them, which suggests that they learn transferable rules rather than only mimicking the training solutions.</p>
+    <div class="long-grid" id="long-grid" data-items="ood_2,ood_1,ood_0,ood_4,ood_5,ood_hanoi4"></div>
+    <div class="duo gen">
+      <div class="table-wrap tight">
+        <table class="num">
+          <caption><b>Strict success rate (%) on puzzles outside the training range.</b><br>CFT starts from the better causal model of each benchmark.</caption>
+          <thead>
+            <tr><th rowspan="2" class="l">Method</th><th colspan="2" class="grp">Sokoban</th><th class="grp">FlowFree</th><th colspan="2" class="grp">RoboTwin-Plan</th></tr>
+            <tr><th>4 boxes</th><th>5 boxes</th><th>9&times;9</th><th>Blocks World<br>2&times;2</th><th>Tower of Hanoi<br>2&times;2</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Bidirectional</td><td>0.0</td><td>2.0</td><td>0.0</td><td>14.0</td><td>16.0</td></tr>
+            <tr class="ours"><td>Ours (K = 8)</td><td>23.0</td><td>10.0</td><td>3.0</td><td><b>36.0</b></td><td><b>18.0</b></td></tr>
+            <tr class="ours"><td>Ours (K = 1)</td><td>51.0</td><td>37.0</td><td>32.0</td><td>4.0</td><td>2.0</td></tr>
+            <tr class="ours"><td>+ CFT (ours)</td><td><b>74.0</b></td><td><b>54.0</b></td><td><b>38.0</b></td><td>32.0</td><td>14.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure class="fig size-fig">
+<figcaption><b>Strict success rate (%) by puzzle size.</b><br>Frame-wise generation with CFT stays on top at every size.</figcaption>
+        <img src="img/supp_difficulty.webp" width="1200" height="775" loading="lazy" alt="Strict success by puzzle size">
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="sec wrap" id="analysis">
+  <h2>Analysis</h2>
+  <div class="ana">
+    <div class="ana-head"><p class="design-tag">Generation paradigm</p><h3>Where joint generation fails</h3>
+      <p class="text center-text">Each test video is categorized by its first error. Most failures of joint generation break a rule, and frame-wise causal generation removes most of them.</p></div>
+    <div class="ana-body">
+      <figure class="fig ana-fig"><img src="img/fig4_failures.webp" width="1400" height="554" loading="lazy" alt="Failure analysis of generation paradigms"></figure>
+      <div class="stats">
+        <div class="stat"><p class="stat-num">97% <span class="arrow">&rarr;</span> 2%</p><p class="stat-label">FlowFree videos that break a rule,<br>bidirectional &rarr; frame-wise</p></div>
+        <div class="stat"><p class="stat-num">98.2% <span class="vs">vs</span> 50.8%</p><p class="stat-label">bidirectional Sokoban videos,<br>reaching the goal vs. following every rule</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="ana">
+    <div class="ana-head"><p class="design-tag">Post-training</p><h3>Why CFT works</h3>
+      <p class="text center-text">At 149 points where the SFT model failed on the Sokoban test sets,<br>CFT shifts the decision distribution toward successful decisions,<br>and the noise that caused the failure now often produces the successful decision.</p></div>
+    <div class="ana-body">
+      <figure class="fig ana-fig"><img src="img/fig6_mechanism.webp" width="1400" height="509" loading="lazy" alt="Decisions at the divergence points"></figure>
+      <div class="stats">
+        <div class="stat"><p class="stat-num">44% <span class="arrow">&rarr;</span> 68%</p><p class="stat-label">successful decisions over fresh noises,<br>SFT model &rarr; CFT</p></div>
+        <div class="stat"><p class="stat-num">57%</p><p class="stat-label">noises that caused a failure,<br>now producing the successful decision</p></div>
+      </div>
+    </div>
+    <p class="text center-text lead2">Self-generated corrections also work far better than corrections drawn by a solver, which cover more puzzles but lie outside the model&rsquo;s own distribution.</p>
+    <div class="ana-body flip">
+      <div class="stats">
+        <div class="stat"><p class="stat-num">84.4% <span class="vs">vs</span> 48.2%</p><p class="stat-label">FlowFree strict success,<br><span class="nb">self-generated</span> vs. solver corrections</p></div>
+        <div class="stat"><p class="stat-num">2.8&times;</p><p class="stat-label">as many FlowFree puzzles covered by solver corrections</p></div>
+      </div>
+      <figure class="fig ana-fig narrow-fig"><img src="img/supp_solver.webp" width="1100" height="952" loading="lazy" alt="Self-generated versus solver corrections"></figure>
+    </div>
+  </div>
+</section>
+
+<section class="sec wrap" id="more">
+  <h2>More results</h2>
+  <details class="more">
+    <summary>Strict and end-state success of the same videos</summary>
+    <div class="more-body">
+      <figure class="fig chart-fig">
+        <figcaption><b>Checking every transition separates the paradigms.</b><br>Success (%) of the same videos when only the final frame is checked and when every transition is checked;<br>on VBVR-MultiStep, strict success and strict success with the shortest solution.</figcaption>
+        <div class="chart" id="chart-strict"></div>
+      </figure>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Pass@k after post-training</summary>
+    <div class="more-body">
+      <div class="table-wrap">
+        <table class="num wide">
+          <caption><b>Pass@k after post-training (%).</b><br>A puzzle counts as solved if one of k samples is strictly successful. CFT is the best or tied best in 15 of the 18 settings.</caption>
+          <thead>
+            <tr><th rowspan="2" class="l">Method</th><th colspan="3" class="grp">FlowFree</th><th colspan="3" class="grp">FlowFree-Hard</th><th colspan="3" class="grp">Sokoban</th><th colspan="3" class="grp">Sokoban-Hard</th></tr>
+            <tr><th>k=1</th><th>k=2</th><th>k=4</th><th>k=1</th><th>k=2</th><th>k=4</th><th>k=1</th><th>k=2</th><th>k=4</th><th>k=1</th><th>k=2</th><th>k=4</th></tr>
+          </thead>
+          <tbody>
+            <tr class="ours-soft"><td>SFT model (ours)</td><td>77.9</td><td>90.8</td><td>96.1</td><td>44.8</td><td>59.4</td><td>72.2</td><td>83.0</td><td>88.7</td><td>92.0</td><td>50.0</td><td>64.2</td><td>73.8</td></tr>
+            <tr><td>+ Continued SFT</td><td>75.5</td><td>89.6</td><td>94.6</td><td>48.6</td><td>60.4</td><td>73.4</td><td>85.5</td><td>90.3</td><td>93.2</td><td>59.6</td><td>73.0</td><td>82.2</td></tr>
+            <tr><td>+ Sample-level RFT</td><td>83.2</td><td>92.9</td><td>96.6</td><td>50.2</td><td>63.0</td><td>76.6</td><td>90.1</td><td>93.1</td><td>94.8</td><td>61.6</td><td>75.2</td><td>83.4</td></tr>
+            <tr><td>+ Decision-level RFT</td><td>80.1</td><td>91.7</td><td>96.6</td><td><b>52.0</b></td><td>67.2</td><td><b>80.0</b></td><td>89.8</td><td>94.0</td><td>96.2</td><td>73.8</td><td>83.4</td><td>88.0</td></tr>
+            <tr class="ours"><td>+ CFT (ours)</td><td><b>84.4</b></td><td><b>93.2</b></td><td><b>97.4</b></td><td><b>52.0</b></td><td><b>68.6</b></td><td>79.8</td><td><b>90.8</b></td><td><b>94.5</b></td><td><b>96.8</b></td><td><b>78.2</b></td><td><b>85.0</b></td><td><b>88.6</b></td></tr>
+          </tbody>
+        </table>
+        <table class="num second">
+          <thead>
+            <tr><th rowspan="2" class="l">Method</th><th colspan="3" class="grp">VBVR-MultiStep</th><th colspan="3" class="grp">RoboTwin-Plan</th></tr>
+            <tr><th>k=1</th><th>k=2</th><th>k=4</th><th>k=1</th><th>k=2</th><th>k=4</th></tr>
+          </thead>
+          <tbody>
+            <tr class="ours-soft"><td>SFT model (ours)</td><td>74.8</td><td>82.7</td><td>87.8</td><td>73.9</td><td>84.3</td><td>89.7</td></tr>
+            <tr><td>+ Continued SFT</td><td>74.2</td><td>81.5</td><td>87.2</td><td>74.3</td><td>83.6</td><td><b>91.1</b></td></tr>
+            <tr><td>+ Sample-level RFT</td><td>79.8</td><td>86.0</td><td>90.5</td><td>77.9</td><td><b>86.3</b></td><td>90.9</td></tr>
+            <tr><td>+ Decision-level RFT</td><td>78.8</td><td>86.8</td><td>90.7</td><td>70.7</td><td>80.9</td><td>87.6</td></tr>
+            <tr class="ours"><td>+ CFT (ours)</td><td><b>82.2</b></td><td><b>87.5</b></td><td><b>91.3</b></td><td><b>78.0</b></td><td>85.9</td><td>90.7</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Multi-round CFT</summary>
+    <div class="more-body">
+      <figure class="fig chart-fig">
+        <figcaption><b>A second round of CFT</b> on corrections of the updated model adds 1.6 to 5.6 points of strict success (%),<br>while the same number of extra updates on the round-1 data does not.</figcaption>
+        <div class="chart" id="chart-rounds"></div>
+      </figure>
+    </div>
+  </details>
+  <details class="more">
+    <summary>First errors on the larger puzzles</summary>
+    <div class="more-body">
+      <figure class="fig">
+<figcaption>Each video categorized by its first error (%, 100 puzzles each).<br>On Sokoban with 4 and 5 boxes, CFT removes most of the rule violations of the frame-wise model.</figcaption><div class="scroller"><img src="img/supp_ood_failures.webp" width="2000" height="320" loading="lazy" alt="Failure analysis on the larger puzzles"></div></figure>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Two divergence points in detail</summary>
+    <div class="more-body">
+      <figure class="fig">
+<figcaption>At these divergence points the failed rollout reaches a dead end (a) or hallucinates (b).<br>Right: the decisions of each model over 32 noises.</figcaption><img src="img/supp_mechanism_example.webp" width="1800" height="974" loading="lazy" alt="Two divergence points"></figure>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Results per task on VBVR-MultiStep and RoboTwin-Plan</summary>
+    <div class="more-body">
+      <div class="table-wrap">
+        <table class="num">
+          <caption>VBVR-MultiStep (strict and shortest, %).</caption>
+          <thead><tr><th class="l">Method</th><th>Tower of Hanoi</th><th>Ordinal Number<br>Sequence</th><th>Sliding Puzzle</th><th>Snake Routing</th><th>Sokoban</th><th>TSP Reward<br>Collection</th></tr></thead>
+          <tbody>
+            <tr><td>Bidirectional</td><td>8.0</td><td>2.0</td><td>9.0</td><td>5.0</td><td>39.0</td><td>71.0</td></tr>
+            <tr><td>HDR</td><td>13.0</td><td>27.0</td><td>12.0</td><td>1.0</td><td>19.0</td><td>72.0</td></tr>
+            <tr><td>S2PD</td><td>21.0</td><td>94.0</td><td>52.0</td><td>70.0</td><td>64.0</td><td>86.0</td></tr>
+            <tr class="ours"><td>Ours (K = 1)</td><td>37.0</td><td>97.0</td><td>61.0</td><td>86.0</td><td>75.0</td><td><b>93.0</b></td></tr>
+            <tr class="ours"><td>+ CFT (ours)</td><td><b>61.0</b></td><td><b>98.0</b></td><td><b>68.0</b></td><td><b>90.0</b></td><td><b>83.0</b></td><td><b>93.0</b></td></tr>
+          </tbody>
+        </table>
+        <table class="num second">
+          <caption>RoboTwin-Plan (strict success, %).</caption>
+          <thead>
+            <tr><th rowspan="2" class="l">Method</th><th colspan="2" class="grp">Blocks World</th><th colspan="2" class="grp">Tower of Hanoi</th><th colspan="2" class="grp">Color Sorting</th></tr>
+            <tr><th>Row</th><th>Triangle</th><th>Row</th><th>Triangle</th><th>Buffer</th><th>No buffer</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Bidirectional</td><td>66.0</td><td>30.0</td><td>98.0</td><td>66.0</td><td>55.0</td><td>5.0</td></tr>
+            <tr><td>HDR</td><td><b>86.0</b></td><td>56.7</td><td>90.0</td><td>72.0</td><td>75.0</td><td>35.0</td></tr>
+            <tr><td>S2PD</td><td>79.0</td><td>46.3</td><td>92.0</td><td>84.0</td><td>80.0</td><td>54.0</td></tr>
+            <tr class="ours"><td>Ours (K = 8)</td><td>85.0</td><td><b>64.0</b></td><td>98.0</td><td>74.0</td><td>90.0</td><td>64.0</td></tr>
+            <tr class="ours"><td>Ours (K = 1)</td><td>75.0</td><td>50.7</td><td><b>100</b></td><td><b>88.0</b></td><td><b>96.0</b></td><td><b>74.0</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Random test puzzles, 12 per benchmark with every outcome</summary>
+    <div class="more-body">
+      <div class="filters" id="gal-filters" role="tablist" aria-label="Benchmark"></div>
+      <div class="gallery" id="gallery"></div>
+    </div>
+  </details>
+</section>
+
+<section class="sec wrap" id="bibtex">
+  <h2>Citation</h2>
+  <div class="bib"><button class="copy-btn" type="button">Copy</button><pre><code>@article{zhang2026videcide,
+  title   = {ViDecide: Teaching Video Diffusion Models to Reason and Plan Step by Step},
+  author  = {Zhang, Kaiwen and Gao, Yiming and Xiao, Zeqi and Wang, Xintao and Wan, Pengfei and Gai, Kun and Pan, Xingang},
+  journal = {arXiv preprint arXiv:XXXX.XXXXX},
+  year    = {2026}
+}</code></pre></div>
+</section>
+
+<footer class="foot wrap">
+  <p class="vnote"><b>Note.</b> All videos are raw model outputs at 16&nbsp;fps (closed-source generators at 24&nbsp;fps). Amber outlines mark the first rule violation; red borders are the end frames drawn by the models. A panel that ends early holds its last frame, and failed runs that continue long after their last violation are cut.</p>
+</footer>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
