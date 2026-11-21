@@ -1,0 +1,18 @@
+# Separate environment for the RoboTwin-Plan verifier (scripts/robotwin/verifier.py and state_reader.py), which loads
+# DINOv3 through transformers>=4.56. These are the versions we used, with Python 3.11:
+#   pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cu126
+#   pip install -r requirements-verifier.txt
+torch==2.14.1
+torchvision==0.29.1
+transformers==5.19.0
+huggingface_hub==2.2.0
+safetensors==0.8.0
+accelerate==1.15.0
+numpy==2.4.6
+scipy==1.17.1
+opencv-python-headless==5.0.0.93
+pillow==12.3.0
+imageio==2.38.1
+imageio-ffmpeg==0.6.0
+PyYAML==6.0.3
+tqdm==4.70.1

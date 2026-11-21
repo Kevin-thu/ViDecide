@@ -1,0 +1,10 @@
+# FlowFree, bidirectional baseline (fixed length), stage 1. Every video keeps its native speed and holds its last
+# (EOS) frame up to the longest training video, 173 frames = 44 latent frames; all frames are denoised jointly.
+_base_: flowfree_k1.yaml
+causal: false
+teacher_forcing: false
+data_path: data/latents/flowfree/fixed_length/lmdb
+metadata_path: data/latents/flowfree/fixed_length/metadata.json
+frame_buckets: [44]
+prebuild_buckets: []
+image_or_video_shape: [1, 44, 48, 24, 24]

@@ -1,0 +1,11 @@
+# Maze (VideoRLVR), frame-wise causal generation (K=1), training shift s=10.
+# Five epochs over the 9,500 training videos at batch 2 (2 GPUs x 1 video), peak lr 1e-5, 500 warmup updates, cosine
+# decay: 23,750 updates (one stage, as the paper's Maze model). Maze is saturated: every paradigm exceeds 98%.
+_base_: _base.yaml
+task: maze
+metadata_filter: {task: maze, split: train}
+expected_train_rows: 9500
+data_path: data/latents/maze/native/lmdb
+metadata_path: data/latents/maze/native/metadata.json
+total_batch_size: 2
+max_iters: 23750

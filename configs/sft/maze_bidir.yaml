@@ -1,0 +1,10 @@
+# Maze, bidirectional baseline (fixed length). Every video keeps its native speed and holds its last (EOS) frame up to
+# the longest training video, 105 frames = 27 latent frames; all frames are denoised jointly.
+_base_: maze_k1.yaml
+causal: false
+teacher_forcing: false
+data_path: data/latents/maze/fixed_length/lmdb
+metadata_path: data/latents/maze/fixed_length/metadata.json
+frame_buckets: [27]
+prebuild_buckets: []
+image_or_video_shape: [1, 27, 48, 24, 24]

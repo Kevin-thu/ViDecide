@@ -1,0 +1,13 @@
+# RoboTwin-Plan, bidirectional baseline (fixed length per sub-task, up to 185 frames = 47 latent frames),
+# ten epochs at batch 4 (2 GPUs x 2 videos of the same sub-task): 25,000 updates.
+_base_: robotwin_k8.yaml
+causal: false
+teacher_forcing: false
+num_frame_per_block: 1
+data_path: data/latents/robotwin/fixed_length/lmdb
+metadata_path: data/latents/robotwin/fixed_length/metadata.json
+total_batch_size: 4
+max_iters: 25000
+frame_buckets: [31, 32, 41, 45, 47]
+prebuild_buckets: []
+image_or_video_shape: [1, 47, 48, 24, 24]

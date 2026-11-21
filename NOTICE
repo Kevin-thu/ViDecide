@@ -1,0 +1,83 @@
+ViDecide
+Copyright 2026 S-Lab
+
+The code of this repository is licensed under the S-Lab License 1.0 (see LICENSE.md), except for the files that
+include or adapt software of the third parties listed below: these files keep the license of the software they come
+from, as stated in each entry.
+
+-------------------------------------------------------------------------------------------------------------------
+1. Causal-Forcing
+   https://github.com/thu-ml/Causal-Forcing
+   Apache License, Version 2.0. Copyright the Causal-Forcing authors.
+
+   third_party/causal_forcing_overlay/ holds modified versions of files of Causal-Forcing at commit
+   3e7cc998e745afd439d5b691e30b8a4a5d48ce38 and two added files. scripts/setup/setup_causal_forcing.sh copies them
+   over a checkout of that commit; Causal-Forcing itself is not redistributed in this repository. All files in
+   third_party/causal_forcing_overlay/ are licensed under the Apache License, Version 2.0 (full text in
+   third_party/LICENSE-Apache-2.0.txt), not under the S-Lab License. Every modified file carries a notice. The
+   changes are:
+     model/base.py                        build the text encoder and VAE of the configured model (Wan2.2-TI2V-5B)
+     model/diffusion.py                   teacher-forcing loss on variable-length videos with validity masks,
+                                          per-sample seeded training noise, Wan2.2 loss weighting
+     pipeline/causal_diffusion_inference.py  Wan2.2-TI2V-5B dimensions, KV caches sized to the video,
+                                          segment-wise sampling helpers used by the rollout engine
+     trainer/__init__.py                  export the diffusion trainer only
+     trainer/diffusion.py                 warmup with cosine / constant schedules and resets on resume, exact
+                                          full-state resume, variable-length bucketed data, paired training noise,
+                                          FSDP2 options
+     utils/dataset.py                     variable-length latent LMDB datasets with metadata, length-bucketed samplers
+     utils/distributed.py                 FSDP2, tensor- and sequence-parallel helpers
+     utils/wan_wrapper.py                 Wan2.2-TI2V-5B support (48-channel Wan2.2 VAE through diffusers, model
+                                          folders) and KV-cache arguments for segment-wise generation
+     wan/modules/attention.py             PyTorch scaled-dot-product fallback when FlashAttention is missing
+     wan/modules/causal_model.py          teacher-forcing attention masks for K-frame segments on a clean history
+                                          (FlexAttention), variable-length buckets, KV-cache inference
+     wan/modules/model.py                 Wan2.2 "ti2v" model type, head counts of sharded projections
+     utils/sequence_parallel.py (added)   Ulysses sequence parallelism
+     utils/tp_parallel.py (added)         tensor parallelism
+
+   Causal-Forcing builds on Self-Forcing and on Wan. The files under wan/ keep the notice
+   "Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved." and the Apache License, Version 2.0.
+
+-------------------------------------------------------------------------------------------------------------------
+2. RoboTwin 2.0
+   https://github.com/RoboTwin-Platform/RoboTwin
+   MIT License. Copyright (c) 2025 Tianxing Chen (陈天行).
+
+   scripts/robotwin/collect_videos.py adapts the task configuration of RoboTwin's scripts/collect_data.py
+   (function task_args), and scripts/robotwin/planning_tasks.py defines RoboTwin-Plan tasks as subclasses of
+   RoboTwin's Base_Task. These two files are licensed under RoboTwin's MIT License below, not under the S-Lab
+   License. RoboTwin is not redistributed; scripts/setup/setup_robotwin.sh fetches commit
+   ea8b21121ebb3cd201ff5b3fe361944ac94eda3f. RoboTwin's license:
+
+     MIT License
+
+     Copyright (c) 2025 Tianxing Chen (陈天行)
+
+     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+     documentation files (the "Software"), to deal in the Software without restriction, including without
+     limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+     Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+     conditions:
+
+     The above copyright notice and this permission notice shall be included in all copies or substantial portions
+     of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+     TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+     CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     DEALINGS IN THE SOFTWARE.
+
+-------------------------------------------------------------------------------------------------------------------
+3. Models and data used but not included in this repository
+   Wan2.2-TI2V-5B (https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B), Apache License, Version 2.0.
+   DINOv3 ViT-L/16 (https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m), DINOv3 License.
+   DINOv2-base (https://huggingface.co/facebook/dinov2-base), Apache License, Version 2.0.
+   VideoRLVR (https://github.com/luka-group/VideoRLVR, data: https://huggingface.co/datasets/DarthZhu/VideoRLVR-Data),
+   CC BY-NC 4.0 for the data.
+   VBVR-MultiStep (https://huggingface.co/datasets/Video-Reason/VBVR-MultiStep), CC BY 4.0.
+
+   assets/examples/ contains a Sokoban puzzle of the VideoRLVR test set (derived from VideoRLVR-Data, CC BY-NC 4.0)
+   and an 8x8 FlowFree puzzle of the FlowFree test set, which we generated, with their first frames rendered with our
+   renderer.

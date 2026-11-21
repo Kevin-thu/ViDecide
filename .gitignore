@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Third-party checkouts created by scripts/setup/
+third_party/Causal-Forcing/
+third_party/RoboTwin/
+
+# Models, data and runs (download or produce them locally; see README)
+checkpoints/
+data/
+outputs/
+wandb/
+release/
+
+# Large binaries
+*.pt
+*.pth
+*.safetensors
+*.ckpt
+*.npy
+*.npz
+*.lmdb
+*.mp4
+*.avi
+*.mov
+*.webm
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store

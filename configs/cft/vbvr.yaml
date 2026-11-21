@@ -1,0 +1,33 @@
+# Corrective Fine-tuning (CFT) of the VBVR-MultiStep K=1 SFT model (Tab. 5 and Tab. S4 of the paper).
+# 9,800 updates at batch 3: two epochs over 10,937 corrections from 3,932 puzzles of Tower of Hanoi, Sliding Puzzle
+# and Sokoban, plus expert videos of all six tasks (26% of rows).
+_base_: ../sft/vbvr_k1.yaml
+rft_mode: cft                        # cft | decision_rft | sample_rft | sft
+fork_sigma: force1_half              # the divergence segment draws t=1 with probability fork_sigma1_prob, else t ~ p_DF(t)
+fork_sigma1_prob: 0.5
+rft_weighting: uniform               # half of each row's loss weight on the divergence segment, half on the suffix
+metadata_path: ???                   # training manifest of the method, written by scripts/posttrain/prepare_*_cft.py
+sft_checkpoint: ???                  # full training state (weights + AdamW moments) of the SFT model
+resume_from: ${sft_checkpoint}      # to continue an interrupted run: resume_from=<logdir>/checkpoint_rolling/model.pt
+rft_phase_entry_checkpoint: ${sft_checkpoint}
+resume_reset_lr_scheduler: true
+require_optimizer_resume: true
+lr: 1.0e-6
+lr_schedule: cosine
+warmup_steps: 1000
+resume_lr: 1.0e-6
+resume_lr_warmup_steps: 1000
+resume_lr_schedule_steps: 9800
+max_iters: 47300                     # SFT steps (37500) + 9800 CFT updates
+data_step_origin: 37500
+expected_train_rows: 29400
+total_batch_size: 3                  # 3 GPUs x 1 row (one row per GPU is required for the per-row loss weights)
+batch_size: 1
+prebuild_buckets: []
+val_samples: 500
+val_interval: 500
+save_iters: 50
+named_checkpoint_steps: [39950, 42400, 44850, 47300]   # every half epoch
+rolling_full_state_iters: 1000
+wandb_name: cft
+bucket_batching: false

@@ -1,0 +1,6 @@
+# RoboTwin-Plan, frame-wise causal generation (K=1), same schedule as robotwin_k8.yaml.
+_base_: robotwin_k8.yaml
+num_frame_per_block: 1
+frame_buckets: [17, 25, 33, 41, 47]
+prebuild_buckets: [17, 25, 33, 41, 47]
+image_or_video_shape: [1, 47, 48, 24, 24]

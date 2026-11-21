@@ -1,0 +1,31 @@
+# Corrective Fine-tuning (CFT) of the Sokoban K=1 SFT model (Tab. 5 and Tab. S4 of the paper).
+# 6,200 updates at batch 3: two epochs over 6,962 corrections from 2,747 puzzles, plus expert videos (25% of rows).
+_base_: ../sft/sokoban_k1.yaml
+rft_mode: cft                        # cft | decision_rft | sample_rft | sft
+fork_sigma: force1_half              # the divergence segment draws t=1 with probability fork_sigma1_prob, else t ~ p_DF(t)
+fork_sigma1_prob: 0.5
+rft_weighting: uniform               # half of each row's loss weight on the divergence segment, half on the suffix
+metadata_path: ???                   # training manifest of the method, written by scripts/posttrain/prepare_*_cft.py
+sft_checkpoint: ???                  # full training state (weights + AdamW moments) of the SFT model
+resume_from: ${sft_checkpoint}      # to continue an interrupted run: resume_from=<logdir>/checkpoint_rolling/model.pt
+rft_phase_entry_checkpoint: ${sft_checkpoint}
+resume_reset_lr_scheduler: true
+require_optimizer_resume: true
+lr: 1.0e-6
+lr_schedule: cosine
+warmup_steps: 1000
+resume_lr: 1.0e-6
+resume_lr_warmup_steps: 1000
+resume_lr_schedule_steps: 6200
+max_iters: 53700                     # SFT steps (47500) + 6200 CFT updates
+data_step_origin: 47500
+expected_train_rows: 18600
+total_batch_size: 3                  # 3 GPUs x 1 row (one row per GPU is required for the per-row loss weights)
+batch_size: 1
+prebuild_buckets: []
+val_samples: 500
+val_interval: 500
+save_iters: 50
+named_checkpoint_steps: [49050, 50600, 52150, 53700]   # every half epoch
+rolling_full_state_iters: 1000
+wandb_name: cft

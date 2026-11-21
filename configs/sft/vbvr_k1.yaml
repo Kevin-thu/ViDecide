@@ -1,0 +1,12 @@
+# VBVR-MultiStep (six planning tasks, one generalist model), frame-wise causal generation (K=1), shift s=10.
+# Five epochs over 30,000 training videos at batch 4 (2 GPUs x 2 length-bucketed videos): 37,500 updates.
+_base_: _base.yaml
+task: vbvr
+metadata_filter: {task: vbvr, split: train}
+expected_train_rows: 30000
+data_path: data/latents/vbvr/native/lmdb
+metadata_path: data/latents/vbvr/native/metadata.json
+batch_size: 2
+bucket_batching: true
+total_batch_size: 4
+max_iters: 37500

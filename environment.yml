@@ -1,0 +1,10 @@
+# conda env create -f environment.yml && conda activate videcide
+# then: pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu126
+#       pip install -r requirements.txt
+name: videcide
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - git

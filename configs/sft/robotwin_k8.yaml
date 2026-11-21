@@ -1,0 +1,18 @@
+# RoboTwin-Plan (six sub-tasks, one generalist model), chunk-wise causal generation (K=8), shift s=10.
+# Ten epochs over 10,000 episodes at batch 6 (3 GPUs x 2 videos of the same sub-task): 16,700 updates.
+_base_: _base.yaml
+task: robotwin
+metadata_filter: {task: robotwin, split: train}
+expected_train_rows: 10000
+data_path: data/latents/robotwin/native/lmdb
+metadata_path: data/latents/robotwin/native/metadata.json
+num_frame_per_block: 8
+batch_size: 2
+robotwin_matched_batching: true
+total_batch_size: 6
+max_iters: 16700
+frame_buckets: [17, 25, 33, 41, 49]
+prebuild_buckets: [17, 25, 33, 41, 49]
+image_or_video_shape: [1, 49, 48, 24, 24]
+val_samples: 350
+val_interval: 500

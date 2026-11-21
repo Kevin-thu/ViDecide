@@ -1,0 +1,4 @@
+# Sokoban, chunk-wise causal generation (K=8), stage 1.
+# (Our stage-2 run used one GPU with length-bucketed micro-batches of 2 videos, i.e. the same batch of 2.)
+_base_: sokoban_k1.yaml
+num_frame_per_block: 8

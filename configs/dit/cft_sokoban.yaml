@@ -1,0 +1,23 @@
+# CFT of the DiT-B Sokoban model (Tab. 5): 1,000 updates at batch 32, lr 5e-6 after 500 warmup updates, EMA 0.99.
+# Needs --init <SFT anneal>/step_011000/full_state.pt, --round-dir ROUND, --decisions ROUND/decisions.json and --out
+# (ROUND: corrections collected with scripts/dit/rft_rollout.py --max-frames 58 and rft_branch.py). Expert videos come
+# from the training puzzles whose solution fits the 58-frame generation budget (sets train and hard_train).
+# The paper reports the mean of three seeds (20261009, 20261109, 20261119).
+task: sokoban
+mode: cft           # cft | decision_rft | sample_rft | sft
+train_sets: train,hard_train
+max_frames: 58     # generation budget of the collection; longer expert videos are left out
+mu: 2.303
+lr: 5.0e-6
+warmup: 500
+decay: 0           # constant learning rate after warmup
+steps: 1000
+batch: 32
+accum: 2
+sft_frac: 0.25     # expert videos fill a quarter of every batch
+p_sigma1: 0.5      # probability of t=1 for the corrective sample at the divergence frame
+fork_weight: 0.5   # half of each correction's loss weight on the divergence frame
+ema: 0.99
+initial_ema_raw: true
+exact_float_targets: true
+seed: 20261009

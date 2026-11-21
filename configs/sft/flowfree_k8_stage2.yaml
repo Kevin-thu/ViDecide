@@ -1,0 +1,12 @@
+# FlowFree, K=8, stage 2 (epochs 6-10).
+# Stage 2 (Sec. C.1 of the supplement): five more epochs from the final full training state of stage 1, keeping
+# the AdamW moments and restarting the cosine schedule with a peak of 3e-6 and 1,500 warmup updates.
+_base_: flowfree_k8.yaml
+lr: 3.0e-6
+max_iters: 47500
+resume_from: ???                 # stage-1 final state, e.g. outputs/sft/flowfree_k8/checkpoint_model_023750/model.pt
+resume_reset_lr_scheduler: true  # set to false when resuming an interrupted stage-2 run from its own checkpoint_rolling
+require_optimizer_resume: true
+resume_lr: 3.0e-6
+resume_lr_warmup_steps: 1500
+resume_lr_schedule_steps: 23750

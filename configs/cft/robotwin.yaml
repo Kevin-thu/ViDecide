@@ -1,0 +1,33 @@
+# Corrective Fine-tuning (CFT) of the RoboTwin-Plan K=8 SFT model (Tab. 5 and Tab. S4 of the paper).
+# 3,200 updates at batch 3: about two epochs over 3,430 corrections from 1,258 episodes of the four weakest sub-tasks,
+# plus expert videos of all six sub-tasks (29% of rows). The divergence step is a whole K=8 segment.
+_base_: ../sft/robotwin_k8.yaml
+rft_mode: cft                        # cft | decision_rft | sample_rft | sft
+fork_sigma: force1_half              # the divergence segment draws t=1 with probability fork_sigma1_prob, else t ~ p_DF(t)
+fork_sigma1_prob: 0.5
+rft_weighting: uniform               # half of each row's loss weight on the divergence segment, half on the suffix
+metadata_path: ???                   # training manifest of the method, written by scripts/posttrain/prepare_*_cft.py
+sft_checkpoint: ???                  # full training state (weights + AdamW moments) of the SFT model
+resume_from: ${sft_checkpoint}      # to continue an interrupted run: resume_from=<logdir>/checkpoint_rolling/model.pt
+rft_phase_entry_checkpoint: ${sft_checkpoint}
+resume_reset_lr_scheduler: true
+require_optimizer_resume: true
+lr: 1.0e-6
+lr_schedule: cosine
+warmup_steps: 800
+resume_lr: 1.0e-6
+resume_lr_warmup_steps: 800
+resume_lr_schedule_steps: 3200
+max_iters: 19900                     # SFT steps (16700) + 3200 CFT updates
+data_step_origin: 16700
+expected_train_rows: 9600
+total_batch_size: 3                  # 3 GPUs x 1 row (one row per GPU is required for the per-row loss weights)
+batch_size: 1
+prebuild_buckets: []
+val_samples: 500
+val_interval: 500
+save_iters: 50
+named_checkpoint_steps: [18300, 19900]   # every half epoch
+rolling_full_state_iters: 1000
+wandb_name: cft
+robotwin_matched_batching: false

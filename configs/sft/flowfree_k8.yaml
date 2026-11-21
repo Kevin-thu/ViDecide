@@ -1,0 +1,3 @@
+# FlowFree, chunk-wise causal generation (K=8 latent frames = 32 video frames per segment), stage 1.
+_base_: flowfree_k1.yaml
+num_frame_per_block: 8

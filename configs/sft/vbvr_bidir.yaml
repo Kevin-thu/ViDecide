@@ -1,0 +1,12 @@
+# VBVR-MultiStep, bidirectional baseline: videos hold their last (EOS) frame up to a fixed length of 165 frames
+# = 42 latent frames (29,826 of the 30,000 training videos fit), batch 4 (2 GPUs x 2 videos), five epochs.
+_base_: vbvr_k1.yaml
+causal: false
+teacher_forcing: false
+data_path: data/latents/vbvr/fixed_length/lmdb
+metadata_path: data/latents/vbvr/fixed_length/metadata.json
+expected_train_rows: 29826
+max_iters: 37283
+frame_buckets: [42]
+prebuild_buckets: []
+image_or_video_shape: [1, 42, 48, 24, 24]

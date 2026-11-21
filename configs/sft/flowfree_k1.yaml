@@ -1,0 +1,12 @@
+# FlowFree (VideoRLVR), frame-wise causal generation (K=1), training shift s=10.
+# Stage 1: five epochs over the 9,500 training videos at batch 2 (2 GPUs x 1 video), peak lr 1e-5, 500 warmup
+# updates, cosine decay. Continue with flowfree_k1_stage2.yaml for the paper's 10 epochs (47,500 updates).
+# Other shifts of Tab. 4: add model_kwargs.timestep_shift=5 (Wan2.2 default) or =1 (no shift).
+_base_: _base.yaml
+task: flowfree
+metadata_filter: {task: flowfree, split: train}
+expected_train_rows: 9500
+data_path: data/latents/flowfree/native/lmdb
+metadata_path: data/latents/flowfree/native/metadata.json
+total_batch_size: 2
+max_iters: 23750

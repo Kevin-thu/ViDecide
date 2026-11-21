@@ -1,0 +1,4 @@
+# VBVR-MultiStep, chunk-wise causal generation (K=8): batch 4 as 4 GPUs x 1 video.
+_base_: vbvr_k1.yaml
+num_frame_per_block: 8
+batch_size: 1

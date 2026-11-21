@@ -1,0 +1,13 @@
+# Sokoban, bidirectional baseline (fixed length), stage 1. Videos hold their last (EOS) frame up to a fixed length
+# of 173 frames = 44 latent frames; the 80 training videos that are longer are left out (9,420 videos, 23,550
+# updates per stage).
+_base_: sokoban_k1.yaml
+causal: false
+teacher_forcing: false
+data_path: data/latents/sokoban/fixed_length/lmdb
+metadata_path: data/latents/sokoban/fixed_length/metadata.json
+expected_train_rows: 9420
+max_iters: 23550
+frame_buckets: [44]
+prebuild_buckets: []
+image_or_video_shape: [1, 44, 48, 24, 24]

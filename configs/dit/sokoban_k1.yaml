@@ -1,0 +1,18 @@
+# DiT-B trained from scratch on Sokoban, frame-wise causal (K=1), training shift s=10 (mu = log 10).
+# 10,000 updates at batch 32 (mode train), then 1,000 updates of linear decay (mode anneal). The paper's SFT number
+# (Tab. 1) evaluates the EMA weights at step 10,000; post-training starts from the annealed state at step 11,000.
+# Data: the pixel cache of scripts/dit/build_cache.py --task sokoban in data/dit/sokoban.
+# Other arms of Tabs. 1, 4 and S7: --arm k8 / bidir / df, --mu 0 (s=1) or --mu 1.609438 (s=5).
+task: sokoban
+arm: k1
+mu: 2.303
+batch: 32
+accum: 2
+lr: 1.0e-4
+warmup: 500
+ema: 0.999
+steps: 10000
+anneal_steps: 1000
+seed: 20261007
+sample_steps: 5
+sample_shift: 1.0

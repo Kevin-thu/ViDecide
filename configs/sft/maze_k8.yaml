@@ -1,0 +1,3 @@
+# Maze, chunk-wise causal generation (K=8 latent frames = 32 video frames per segment).
+_base_: maze_k1.yaml
+num_frame_per_block: 8
